@@ -95,6 +95,8 @@
   }, { once: true, passive: true });  
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getFirestore, doc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyCuqD00FZA-6E6D2efDRES7jx4mLyT_wGo",
       authDomain: "oogiri-game.firebaseapp.com",
@@ -105,6 +107,21 @@
     };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
+    signInAnonymously(auth)
+      .then(() => {
+       console.log("✅ 匿名ログイン成功！");
+      })
+      .catch((error) => {
+       console.error("❌ 匿名ログイン失敗:", error);
+      });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      console.log("👤 匿名ユーザーID:", user.uid);
+    }
+  });
+
 
     // ==== サウンドマネージャ修正版 ====  
     class SoundManager {
