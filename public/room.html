@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>侍大喜利バトル！ルーム</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kaisei+Tokumin:wght@700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --jp-main: #1a2a3a;
+      --jp-accent: #c41c24;
+      --jp-gold: #bb9900;
+      --jp-bg: #f8f5e9;
+      --jp-card: #fffdfa;
+      --jp-outline: #7b3f00;
+      --jp-muted: #ccc;
+    }
+    body {
+      margin: 0;
+      font-family: 'Noto Serif JP', serif;
+      background: var(--jp-bg);
+      min-height: 100vh;
+    }
+    .kaisei {
+      font-family: 'Kaisei Tokumin', serif;
+      letter-spacing: 2px;
+      color: var(--jp-main);
+    }
+    .samurai-title {
+      font-size: 2.2em;
+      margin: 24px 0 14px 0;
+      text-align: center;
+      color: var(--jp-accent);
+      text-shadow: 2px 2px 0 var(--jp-gold), 0 0 6px #fff6;
+      border-bottom: 4px solid var(--jp-accent);
+      border-image: linear-gradient(to right, var(--jp-accent), var(--jp-gold)) 1;
+      padding-bottom: 10px;
+    }
+    .big { font-size: 1.6rem; font-weight: bold; margin-bottom: 12px; font-family: 'Kaisei Tokumin', serif; color: var(--jp-main);}
+    .phase-block { margin: 24px 0; padding: 12px; background: var(--jp-card); border-radius: 8px; box-shadow: 0 1px 8px #ecd097; border: 2px solid var(--jp-outline);}
+    .hand-cards { display: flex; gap: 6px; flex-wrap: wrap; }
+    .hand-card-block { display: flex; flex-direction: column; align-items: center; }
+    .hand-card { 
+      background: #eee; 
+      padding: 8px 14px; 
+      border-radius: 8px; 
+      font-size: 1.08rem; 
+      cursor: pointer; 
+      user-select: none; 
+      min-width: 64px; 
+      max-width: 90px;
+      margin-bottom: 2px;
+      text-align: center;
+      overflow-wrap: break-word;
+      white-space: pre-line;
+      transition: background 0.2s, font-size 0.2s;
+      font-family: 'Noto Serif JP', serif;
+      border: 2.5px double var(--jp-outline);
+    }
+    .hand-card.used { background: var(--jp-muted); color: #fff; }
+    .hand-card.general { background: #e3f1fb; border-color: #317bbd; }
+    .hand-card.funny   { background: #fff5e2; border-color: #d3910c; }
+    .hand-card.adverb  { background: #ede8f9; border-color: #7c5daa; }
+    .hand-card.verb    { background: #e6f7e7; border-color: #418c5e; }
+    .change-btn { background: var(--jp-accent); color: #fff; border: 1px solid #d18900; border-radius: 50%; padding: 4px 8px; font-size: 1.2rem; cursor: pointer; margin-top: 2px; font-family: 'Kaisei Tokumin', serif;}
+    .change-btn:disabled { opacity: 0.33; cursor: not-allowed; }
+    .controls { margin: 10px 0 0 0; display: flex; gap: 8px; flex-wrap: wrap;}
+    .particle-btn { margin: 2px; padding: 4px 10px; background: #fffde4; border: 1.4px solid var(--jp-gold); border-radius: 6px; cursor: pointer; font-size: 1.08em; font-family: 'Kaisei Tokumin', serif;}
+    .particle-btn.used { background: #ccc; color: #fff; cursor: not-allowed; }
+    .btn { background: linear-gradient(90deg, var(--jp-gold) 40%, #fffde4 100%); border: 2px solid var(--jp-accent); color: var(--jp-main); padding: 8px 24px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; font-family: 'Kaisei Tokumin', serif; font-weight: bold; letter-spacing: 0.1em; margin-right: 12px;}
+    .btn:active { box-shadow: none; background: #e6d89d;}
+    .answer-area { min-height: 38px; font-size: 1.2rem; margin-bottom: 14px; border-bottom: 1.7px solid #c9b682; background: #fcf9ee; border-radius: 4px; padding: 10px; font-family: 'Kaisei Tokumin', serif; color: #52331c;}
+    .vote-btn { padding: 7px 20px; border-radius: 10px; background: linear-gradient(90deg, #e4d0b7, #fff9e5 60%); border: 2px solid var(--jp-outline); font-family: 'Kaisei Tokumin', serif; font-size: 1.17em; margin-bottom: 6px; margin-right: 10px; cursor: pointer; color: var(--jp-main);}
+    .vote-btn.voted { background: #ffc; color: #b89b5a;}
+    .timer { font-size:1.1em; font-weight:bold; color:var(--jp-accent); margin-bottom:8px; font-family: 'Kaisei Tokumin', serif;}
+    .answer-token { background:#fffbe6; border-radius:5px; padding:0 5px; margin:2px; display:inline-block; cursor:pointer; font-family: 'Noto Serif JP', serif;}
+    .answer-token.particle { background:#e7e2b8; color:#3e380e;}
+    .answer-token.selected { border:2px solid var(--jp-accent);}
+    .restart-btn { background: linear-gradient(90deg, #b9cc6c, #e3ffe7 70%); color: #213c12; border: 2.5px solid #486625; border-radius: 10px; font-size: 1.2em; font-family: 'Kaisei Tokumin', serif; font-weight: bold; padding: 13px 38px; margin: 18px auto 0 auto; display: block; box-shadow: 0 3px 0 #b1daaa; cursor: pointer;}
+    .restart-btn:active { box-shadow: none;}
+    .theme-big { font-size: 2.2em; text-align: center; color: var(--jp-main); background: linear-gradient(90deg, #fffde2 90%, #fff6); border-bottom: 2.5px solid var(--jp-gold); border-top: 2.5px solid var(--jp-accent); padding: 16px 0 16px 0; font-family: 'Kaisei Tokumin', serif; letter-spacing: 0.06em; margin: 28px 0 14px 0; box-shadow: 0 2px 0 #fffb;}
+    .players-bar { background: #f5efe1; border: 1.5px solid #bc8e4e; border-radius: 8px; margin-top: 18px; padding: 7px 10px; font-family: 'Kaisei Tokumin', serif; font-size: 1.08em; color: #675a3c; box-shadow: 0 1px 0 #eee; text-align: left;}
+    @media (max-width:650px) {
+      .phase-block, .theme-big { font-size: 1.15em; }
+      .btn, .vote-btn, .restart-btn { font-size: 1em; padding: 10px 8vw;}
+    }
+  </style>
+  <script type="module">
+  document.addEventListener("pointerdown", () => {
+    try {
+      soundManager.unlockAudio();
+      console.log('unlockAudio手動呼び出し');
+    } catch(e){
+      console.error('unlockAudio呼び出し失敗', e);
+    }
+  }, { once: true, passive: true });  
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getFirestore, doc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyCuqD00FZA-6E6D2efDRES7jx4mLyT_wGo",
+      authDomain: "oogiri-game.firebaseapp.com",
+      projectId: "oogiri-game",
+      storageBucket: "oogiri-game.firebasestorage.app",
+      messagingSenderId: "219076280601",
+      appId: "1:219076280601:web:e07b5bc63d5692ec1d0588"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ==== サウンドマネージャ修正版 ====  
+    class SoundManager {
+      constructor() {
+        this.bgmAudios = {
+          lobby: this.createBgm("./bgm/lobby_bgm.mp3"),
+          answer: this.createBgm("./bgm/kaitousakusei_bgm.mp3"),
+          reveal: this.createBgm("./bgm/kaitouhappyou_bgm.mp3"),
+        };
+        this.seAudios = {
+          odaihappyou: this.createSe("./se/odaihappyou_se.mp3"),
+          kaitouhappyou: this.createSe("./se/kaitouhappyou_se.mp3"),
+          waraigoe: this.createSe("./se/waraigoe_se.mp3"),
+          kannsei: this.createSe("./se/kannsei_se.mp3"),
+        };
+        this.currentBgm = null;
+        this.unlocked = false;
+        this.unlockHandler = this.unlockAudio.bind(this);
+        document.addEventListener("pointerdown", this.unlockHandler, { once: true, passive: true });
+        // フェード用
+        this.fadeTimer = null;
+        this.targetVolume = 0.22;
+        this.lastFadeBgm = null;
+      }
+      createBgm(src) {
+        const audio = new Audio(src);
+        audio.loop = true;
+        audio.preload = "auto";
+        return audio;
+      }
+      createSe(src) {
+        const audio = new Audio(src);
+        audio.preload = "auto";
+        return audio;
+      }
+      unlockAudio() {
+        for (const k in this.bgmAudios) { this.bgmAudios[k].muted = true; this.bgmAudios[k].play().catch(()=>{}); this.bgmAudios[k].pause(); this.bgmAudios[k].currentTime=0; this.bgmAudios[k].muted = false;}
+        for (const k in this.seAudios) { this.seAudios[k].muted = true; this.seAudios[k].play().catch(()=>{}); this.seAudios[k].pause(); this.seAudios[k].currentTime=0; this.seAudios[k].muted = false;}
+        this.unlocked = true;
+        if (phase === "waiting") {
+           this.playBgm("lobby");
+        } 
+      }
+      playBgm(type) {
+        if (!this.unlocked) return;
+        if (this.currentBgm && this.currentBgm !== this.bgmAudios[type]) {
+          this.currentBgm.pause();
+          this.currentBgm.currentTime = 0;
+        }
+        if (this.bgmAudios[type]) {
+          this.currentBgm = this.bgmAudios[type];
+          this.currentBgm.volume = this.targetVolume;
+          this.currentBgm.play().catch(()=>{});
+        }
+      }
+      stopBgm() {
+        if (this.currentBgm) {
+          this.currentBgm.pause();
+          this.currentBgm.currentTime = 0;
+        }
+        this.currentBgm = null;
+      }
+      playSe(type, volume = 0.95) {
+        if (!this.unlocked) return;
+        if (this.seAudios[type]) {
+          const se = this.seAudios[type];
+          se.currentTime = 0;
+          se.volume = volume;
+          se.play().catch(()=>{});
+        }
+      }
+      fadeOutBgm(duration = 1000, after = null) {
+        if (!this.currentBgm) { if (after) after(); return; }
+        if (this.fadeTimer) clearInterval(this.fadeTimer);
+        const bgm = this.currentBgm;
+        this.lastFadeBgm = bgm;
+        let v = bgm.volume;
+        const step = v / (duration / 50);
+        this.fadeTimer = setInterval(() => {
+          v = Math.max(0, v - step);
+          bgm.volume = v;
+          if (v <= 0.001) {
+            clearInterval(this.fadeTimer);
+            this.fadeTimer = null;
+            bgm.volume = 0;
+            bgm.pause();
+            if (after) after();
+          }
+        }, 50);
+      }
+      fadeInBgm(duration = 800) {
+        if (!this.currentBgm) return;
+        if (this.fadeTimer) clearInterval(this.fadeTimer);
+        const bgm = this.currentBgm;
+        this.lastFadeBgm = bgm;
+        bgm.volume = 0;
+        bgm.play().catch(()=>{});
+        let v = 0;
+        const step = this.targetVolume / (duration / 50);
+        this.fadeTimer = setInterval(() => {
+          v = Math.min(this.targetVolume, v + step);
+          bgm.volume = v;
+          if (v >= this.targetVolume) {
+            clearInterval(this.fadeTimer);
+            this.fadeTimer = null;
+            bgm.volume = this.targetVolume;
+          }
+        }, 50);
+      }
+    }
+    const soundManager = new SoundManager();
+    // ==============================
+
+    const url = new URL(location.href);
+    const roomId = url.searchParams.get("roomId");
+    const userName = url.searchParams.get("userName");
+    const userId = url.searchParams.get("userId");
+
+    if (!userId) {
+      alert('不正な遷移です。ロビーから入り直してください');
+      location.href = '/lobby.html';
+    }
+
+    let isHost = false, phase = "waiting", round = 1, roundMax = 5, myHand = [], usedParticle = null;
+    let answerTokens = [], answerDone = false, voted = false, voteTarget = null;
+    let roomData = {}, roundData = {}, users = {}, points = {}, answers = {}, answerRevealOrder = [];
+    let revealStep = 0;
+    const PARTICLES = ["に","は","を","が","の","へ","と","より","から","で"];
+    const answerArea = document.createElement("div");
+    let themeVoteTimer = null, themeVoteTimeLeft = 0, themeVoteFinished = false;
+    let usedChangeIdx = Array(9).fill(false), usedAllChange = false;
+    let usedParticleThisRound = false;
+    let selectedAnswerIdx = null;
+
+    function resetRoundState() {
+      answerTokens = [];
+      answerDone = false;
+      voted = false;
+      voteTarget = null;
+      selectedAnswerIdx = null;
+      usedChangeIdx = Array(9).fill(false);
+      usedAllChange = false;
+      usedParticleThisRound = false;
+      revealStep = 0;
+    }
+
+    document.body.innerHTML = `
+      <div class="samurai-title kaisei">侍大喜利バトルの間</div>
+      <div class="big" id="title"></div>
+      <div id="phaseArea" class="phase-block"></div>
+      <div id="mainArea"></div>
+      <div id="players" class="players-bar"></div>
+    `;
+    const titleEl = document.getElementById("title");
+    const phaseEl = document.getElementById("phaseArea");
+    const mainEl = document.getElementById("mainArea");
+    const playersEl = document.getElementById("players");
+
+    function subscribeUsers() {
+      const q = query(collection(db, "users"), where("roomId", "==", roomId));
+      onSnapshot(q, snap => {
+        users = {}; points = {};
+        isHost = false;
+        myHand = [];
+        snap.forEach(docx => {
+          const d = docx.data();
+          users[docx.id] = d;
+          points[docx.id] = d.points || 0;
+          if (docx.id === userId) {
+            isHost = !!d.isHost;
+            myHand = d.hand || [];
+          }
+        });
+        renderPlayers();
+        renderPhase();
+      });
+    }
+    subscribeUsers();
+
+    function subscribeRoom() {
+      const roomRef = doc(db, "rooms", roomId);
+      onSnapshot(roomRef, snap => {
+        if (!snap.exists()) return;
+        const oldRound = round;
+        roomData = snap.data();
+        phase = roomData.phase;
+        round = roomData.round;
+        roundMax = roomData.roundMax;
+        if (oldRound !== round) resetRoundState();
+        renderPhase();
+      });
+    }
+    subscribeRoom();
+
+    function subscribeRound() {
+      let oldRoundKey = "";
+      let roundRef = null;
+      function listen() {
+        const newRoundKey = `${roomId}_${round}`;
+        if (oldRoundKey === newRoundKey) return;
+        oldRoundKey = newRoundKey;
+        roundRef && roundRef();
+        roundRef = onSnapshot(doc(db, "rounds", newRoundKey), snap => {
+          if (!snap.exists()) return;
+          roundData = snap.data();
+          answers = roundData.answers || {};
+          answerRevealOrder = roundData.answerRevealOrder || [];
+          renderPhase();
+        });
+      }
+      setInterval(listen, 500);
+    }
+    subscribeRound();
+
+    function renderPhase() {
+      titleEl.textContent = `ラウンド${round} / ${roundMax} - ${phaseLabel(phase)}`;
+      mainEl.innerHTML = "";
+      phaseEl.innerHTML = "";
+
+      // ==== フェーズBGM切り替え修正 ====
+      if (phase === "waiting") {
+        soundManager.playBgm("lobby");
+      } else if (phase === "theme_vote") {
+        soundManager.playBgm("answer");
+      } else if (phase === "answer") {
+        soundManager.playBgm("answer");
+      } else if (phase === "answer_reveal" || phase === "vote" || phase === "result" || phase === "end") {
+        soundManager.playBgm("reveal");
+      }
+      // =================================
+
+      if (phase === "waiting") {
+        phaseEl.innerHTML = "全員が揃うまでお待ちください";
+        if (Object.keys(users).length >= 2 && !roomData.started && isHost) {
+          const btn = btnEl("ゲーム開始", async () => {
+            await fetch(`/api/rooms/${roomId}/start`, { method: "POST" });
+            soundManager.playSe("odaihappyou");
+          });
+          phaseEl.appendChild(btn);
+        }
+        clearThemeVoteTimer();
+      }
+      if (phase === "theme_vote") {
+        phaseEl.innerHTML = `
+          <div style="display:flex;align-items:center;font-size:1.2em;">
+            <div>
+              お題投票フェーズ(10秒制限)
+              <span id="themeVoteTimer" class="timer" style="margin-left:0.7em;font-weight:bold;font-size:1.2em;"></span>
+            </div>
+          </div>  
+        `;
+        renderThemeVote();
+       if (!themeVoteTimer) startThemeVoteTimer();
+      } else {
+        clearThemeVoteTimer();
+      }
+      if (phase === "theme_reveal") {
+        phaseEl.innerHTML = "今回のお題は…";
+        setTimeout(() => {
+          phaseEl.innerHTML = `<div class="theme-big"><b>${roundData.theme || ""}</b></div>`;
+          soundManager.playSe("odaihappyou");
+        }, 2000);
+        if (isHost) setTimeout(async () => {
+          await fetch(`/api/rooms/${roomId}/rounds/${round}/answer-phase`, { method: "POST" });
+        }, 5000);
+      }
+      if (phase === "answer") {
+        phaseEl.innerHTML = `お題: <span style="font-weight:bold">${roundData.theme || ""}</span>`;
+        renderAnswerArea();
+      }
+      if (phase === "answer_reveal") {
+        renderAnswerRevealStep();
+      }
+      if (phase === "vote") {
+        phaseEl.innerHTML = "投票フェーズ";
+        renderVoteArea();
+        setTimeout(() => {
+          if (isHost && phase === "vote" && allVotesIn()) {
+            fetch(`/api/rooms/${roomId}/rounds/${round}/result-phase`, { method: "POST" });
+          }
+        }, 1000);
+      }
+      if (phase === "result") {
+        soundManager.playSe("kannsei", 0.85);
+        renderResultArea();
+      }
+      if (phase === "end") {
+        phaseEl.innerHTML = "<b>全ラウンド終了！</b>";
+        renderFinalResult();
+      }
+    }
+
+    function startThemeVoteTimer() {
+      themeVoteTimeLeft = 10;
+      themeVoteFinished = false;
+      updateThemeVoteTimer();
+      themeVoteTimer = setInterval(() => {
+        themeVoteTimeLeft--;
+        updateThemeVoteTimer();
+        if (themeVoteTimeLeft <= 0) {
+          clearThemeVoteTimer();
+          themeVoteFinished = true;
+          if (isHost && phase === "theme_vote") {
+            fetch(`/api/rooms/${roomId}/rounds/${round}/answer-reveal`, { method: "POST" });
+          }
+        } else {
+          if (isHost && phase === "theme_vote" && allVoted()) {
+            clearThemeVoteTimer();
+            fetch(`/api/rooms/${roomId}/rounds/${round}/answer-reveal`, { method: "POST" });
+          }
+        }
+      }, 1000);
+    }
+    function updateThemeVoteTimer() {
+      let tEl = document.getElementById("themeVoteTimer");
+      if (!tEl) {
+        tEl = document.createElement("div");
+        tEl.id = "themeVoteTimer";
+        tEl.className = "timer";
+        phaseEl.prepend(tEl);
+      }
+      tEl.textContent = `残り時間: ${themeVoteTimeLeft}秒`;
+    }
+    function clearThemeVoteTimer() {
+      if (themeVoteTimer) clearInterval(themeVoteTimer);
+      themeVoteTimer = null;
+      let tEl = document.getElementById("themeVoteTimer");
+      if (tEl) tEl.remove();
+    }
+    function allVoted() {
+      if (!roundData || !roundData.themeVotes) return false;
+      return Object.keys(users).every(uid => uid in roundData.themeVotes);
+    }
+
+    function renderThemeVote() {
+      mainEl.innerHTML = "";
+      if (!roundData.themes) return;
+      let myVoteIdx = null;
+      if (roundData.themeVotes && roundData.themeVotes[userId] != null) myVoteIdx = roundData.themeVotes[userId];
+      roundData.themes.forEach((th, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.textContent = th;
+        if (myVoteIdx === idx || themeVoteFinished) btn.disabled = true;
+        btn.onclick = async () => {
+          await fetch(`/api/rooms/${roomId}/rounds/${round}/theme-vote`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, themeIndex: idx })
+          });
+        };
+        mainEl.appendChild(btn);
+      });
+    }
+
+    function renderAnswerArea() {
+      answerArea.className = "answer-area";
+      updateAnswerArea();
+      mainEl.innerHTML = "";
+      mainEl.appendChild(answerArea);
+
+      const handWrap = document.createElement("div");
+      handWrap.className = "hand-cards";
+      myHand.forEach((w, i) => {
+        const block = document.createElement("div");
+        block.className = "hand-card-block";
+        const card = document.createElement("div");
+        card.className = "hand-card";
+        if (i < 4) card.classList.add("general");
+        else if (i < 6) card.classList.add("funny");
+        else if (i == 6) card.classList.add("adverb");
+        else card.classList.add("verb");
+        let size = 1.1;
+        if (w.length > 7) size = Math.max(0.75, 1.1 - (w.length-7)*0.06);
+        card.style.fontSize = size+"rem";
+        card.textContent = w;
+        if (answerTokens.filter(x=>x.type=='word').map(x=>x.idx).includes(i)) card.classList.add("used");
+        card.onclick = () => {
+          if (answerDone) return;
+          if (answerTokens.filter(x=>x.type=='word').map(x=>x.idx).includes(i)) return;
+          if (selectedAnswerIdx !== null) {
+            answerTokens.splice(selectedAnswerIdx+1,0,{ type: "word", idx: i });
+          } else {
+            answerTokens.push({ type: "word", idx: i });
+          }
+          selectedAnswerIdx = null;
+          updateAnswerArea();
+        };
+        block.appendChild(card);
+
+        const cbtn = document.createElement("button");
+        cbtn.className = "change-btn";
+        cbtn.innerHTML = "⟳";
+        if (usedChangeIdx[i] || answerDone) cbtn.disabled = true;
+        cbtn.onclick = async () => {
+          if (usedChangeIdx[i] || answerDone) return;
+          cbtn.disabled = true;
+          usedChangeIdx[i] = true;
+          await fetch(`/api/users/${userId}/hand`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ changeType: "one", cardIdx: i })
+          });
+        };
+        block.appendChild(cbtn);
+
+        handWrap.appendChild(block);
+      });
+      mainEl.appendChild(handWrap);
+
+      const particleWrap = document.createElement("div");
+      particleWrap.className = "controls";
+      PARTICLES.forEach(pt => {
+        const pbtn = document.createElement("button");
+        pbtn.className = "particle-btn";
+        pbtn.textContent = pt;
+        if (usedParticleThisRound) pbtn.disabled = true;
+        pbtn.onclick = () => {
+          if (answerDone || usedParticleThisRound) return;
+          if (selectedAnswerIdx !== null) {
+            answerTokens.splice(selectedAnswerIdx+1,0,{ type: "particle", value: pt });
+          } else {
+            answerTokens.push({ type: "particle", value: pt });
+          }
+          usedParticleThisRound = true;
+          selectedAnswerIdx = null;
+          updateAnswerArea();
+        };
+        particleWrap.appendChild(pbtn);
+      });
+      mainEl.appendChild(particleWrap);
+
+      const controls = document.createElement("div");
+      controls.className = "controls";
+      const allChangeBtn = btnEl("オールチェンジ", async () => {
+        if (usedAllChange || answerDone) return;
+        usedAllChange = true;
+        allChangeBtn.disabled = true;
+        const usedIdxs = answerTokens.filter(x => x.type == "word").map(x => x.idx);
+        let newHand = [...myHand];
+        const res = await fetch(`/api/users/${userId}/hand`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ changeType: "all", keepIdx: usedIdxs })
+        });
+        const data = await res.json();
+        if (data.hand) newHand = data.hand;
+        for (let i = 0; i < myHand.length; ++i) {
+          if (!usedIdxs.includes(i)) {
+            myHand[i] = newHand[i];
+          }
+        }
+      });
+      if (usedAllChange) allChangeBtn.disabled = true;
+      controls.appendChild(allChangeBtn);
+
+      const clearBtn = btnEl("作成クリア", () => {
+        if (answerDone) return;
+        answerTokens = [];
+        usedParticleThisRound = false;
+        updateAnswerArea();
+      });
+      controls.appendChild(clearBtn);
+
+      const sendBtn = btnEl("回答送信！", async () => {
+        if (answerDone || !answerTokens.length) return;
+        answerDone = true;
+        let ans = "";
+        answerTokens.forEach(x => {
+          if (x.type == "word") ans += myHand[x.idx];
+          else if (x.type == "particle") ans += x.value;
+        });
+        await fetch(`/api/rooms/${roomId}/rounds/${round}/answer`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            answer: ans,
+            usedWords: answerTokens.filter(x=>x.type=='word').map(x=>x.idx)
+          })
+        });
+      });
+      if (answerDone) sendBtn.disabled = true;
+      controls.appendChild(sendBtn);
+
+      mainEl.appendChild(controls);
+    }
+
+    function updateAnswerArea() {
+      answerArea.innerHTML = "";
+      answerTokens.forEach((t, i) => {
+        const span = document.createElement("span");
+        span.className = "answer-token";
+        if (t.type == "particle") span.classList.add("particle");
+        span.textContent = (t.type == "word") ? myHand[t.idx] : t.value;
+        if (selectedAnswerIdx === i) span.classList.add("selected");
+        span.onclick = () => {
+          if (answerDone) return;
+          if (selectedAnswerIdx === i) selectedAnswerIdx = null;
+          else selectedAnswerIdx = i;
+          updateAnswerArea();
+        };
+        answerArea.appendChild(span);
+      });
+    }
+
+    // === 回答発表時: フェードアウト→回答表示→SE（kaitouhappyou→waraigoe）→BGM復帰 ===
+function renderAnswerRevealStep() {
+  mainEl.innerHTML = "";
+  if (!answerRevealOrder.length) return;
+  const step = revealStep % answerRevealOrder.length;
+  const uid = answerRevealOrder[step];
+  const ans = (roundData.answers && roundData.answers[uid]) ? roundData.answers[uid].answer : "";
+  const theme = roundData.theme || "";
+  phaseEl.innerHTML = `<div class="theme-big"><b>${theme}</b></div>`;
+
+  // ★★delay設定（今までと同じ）★★
+  let delay = 1200;
+  if (step === 0) delay += 3000;
+
+  // ★ 回答表示タイミングの1秒前にフェードアウト開始！
+  setTimeout(() => {
+    soundManager.fadeOutBgm(1000);
+
+    setTimeout(() => {
+      // 2. 一瞬静かにしてから回答表示
+      mainEl.innerHTML = `<div class="theme-big">${ans}</div>`;
+
+      // 3. 回答表示と同時にSE
+      soundManager.playSe("kaitouhappyou");
+      setTimeout(() => {
+        soundManager.playSe("waraigoe", 0.05);
+      }, 700);
+
+      // 4. さらにちょっと待ってBGMフェードイン
+      setTimeout(() => {
+        soundManager.fadeInBgm(800);
+      }, 1700);
+
+      // 5. 次の回答 or フェーズ遷移
+      setTimeout(() => {
+        revealStep++;
+        if (revealStep < answerRevealOrder.length) {
+          renderAnswerRevealStep();
+        } else {
+          if (isHost) {
+            fetch(`/api/rooms/${roomId}/rounds/${round}/vote-phase`, { method: "POST" });
+          }
+        }
+      }, 5700);
+    }, 1500); // フェードアウト終わったら回答表示
+
+  }, delay - 1000); // 回答表示タイミングの1秒前にフェードアウト開始
+}
+
+    function renderVoteArea() {
+      mainEl.innerHTML = "";
+      if (!roundData || !roundData.answers) return;
+      Object.entries(roundData.answers).forEach(([uid, ans]) => {
+        const btn = document.createElement("button");
+        btn.className = "vote-btn";
+        btn.textContent = ans.answer;
+        if (uid === userId) {
+          btn.disabled = true; btn.style.opacity = "0.5";
+        }
+        if (voted && voteTarget === uid) btn.classList.add("voted");
+        btn.onclick = async () => {
+          if (voted) return;
+          await fetch(`/api/rooms/${roomId}/rounds/${round}/vote`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, voteForUserId: uid })
+          });
+          voted = true; voteTarget = uid;
+          btn.classList.add("voted");
+          if (isHost && allVotesIn()) {
+            setTimeout(() => {
+              fetch(`/api/rooms/${roomId}/rounds/${round}/result-phase`, { method: "POST" });
+            }, 800);
+          }
+        };
+        mainEl.appendChild(btn);
+      });
+    }
+    function allVotesIn() {
+      if (!roundData || !roundData.votes) return false;
+      return Object.keys(users).every(uid => roundData.votes[uid]);
+    }
+
+    function renderResultArea() {
+      mainEl.innerHTML = "";
+      if (!roundData.result) return;
+      let maxVote = 0;
+      Object.values(roundData.result).forEach(v => { if (v > maxVote) maxVote = v; });
+      Object.entries(roundData.result).forEach(([uid, cnt]) => {
+        if (!users[uid]) return;
+        let answerText = (roundData.answers && roundData.answers[uid]) ? roundData.answers[uid].answer : "";
+        const div = document.createElement("div");
+        div.textContent = `${users[uid].userName}：${answerText} ${cnt}ポイント！`;
+        div.style.fontSize = "1.3em";
+        if (cnt === maxVote) div.style.color = "#e54c2a";
+        mainEl.appendChild(div);
+      });
+      if (isHost) {
+        const btn = btnEl("次ラウンドへ", async () => {
+          await fetch(`/api/rooms/${roomId}/next`, { method: "POST" });
+        });
+        mainEl.appendChild(btn);
+      }
+    }
+
+    function renderFinalResult() {
+      mainEl.innerHTML = "<h2>最終結果発表！</h2>";
+      let maxPt = 0;
+      Object.values(points).forEach(pt => { if (pt > maxPt) maxPt = pt; });
+      Object.entries(points).forEach(([uid, pt]) => {
+        if (!users[uid]) return;
+        const div = document.createElement("div");
+        div.textContent = `${users[uid].userName}：${pt} ポイント`;
+        div.style.fontSize = "1.2em";
+        if (pt === maxPt) div.style.color = "#e54c2a";
+        mainEl.appendChild(div);
+      });
+      if (isHost) {
+        const restartBtn = document.createElement("button");
+        restartBtn.className = "restart-btn";
+        restartBtn.textContent = "再戦する";
+        restartBtn.onclick = async () => {
+          await Promise.all(Object.keys(users).map(uid =>
+            fetch(`/api/users/${uid}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ points: 0 })
+            })));
+          await fetch(`/api/rooms/${roomId}/restart`, { method: "POST" });
+        };
+        mainEl.appendChild(restartBtn);
+      }
+    }
+
+    function renderPlayers() {
+      playersEl.innerHTML = "";
+      Object.entries(users).forEach(([uid, u]) => {
+        const div = document.createElement("div");
+        div.textContent = `${u.userName}（${u.points||0}pt）`;
+        div.style.display = "inline-block";
+        div.style.margin = "0 10px 0 0";
+        div.style.fontWeight = "bold";
+        playersEl.appendChild(div);
+      });
+    }
+
+    function btnEl(label, onclick) {
+      const btn = document.createElement("button");
+      btn.className = "btn";
+      btn.textContent = label;
+      btn.onclick = onclick;
+      return btn;
+    }
+
+    function phaseLabel(phase) {
+      return {
+        waiting: "待機",
+        theme_vote: "お題投票",
+        theme_reveal: "お題発表",
+        answer: "回答作成",
+        answer_reveal: "回答発表",
+        vote: "投票",
+        result: "ポイント結果発表",
+        end: "最終結果"
+      }[phase] || phase;
+    }
+  </script>
+</head>
+<body>
+</body>
+</html>
