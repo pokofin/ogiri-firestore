@@ -1,11 +1,190 @@
-<!-- public/index.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>Ogiri App</title>
+  <meta charset="UTF-8">
+  <title>一刀大喜利バトル！ロビー</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body {
+      background: #f6f2e9;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Kosugi Maru', 'Noto Sans JP', sans-serif;
+    }
+    .main-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      width: 100vw;
+    }
+    .poster-box {
+      position: relative;
+      width: 480px;
+      max-width: 99vw;
+      margin: 32px auto 0 auto;
+    }
+    .poster-img {
+      width: 100%;
+      display: block;
+      border-radius: 0;
+      box-shadow: 0 4px 20px #fff7e5a0;
+    }
+    .form-area {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 7px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      z-index: 2;
+      pointer-events: none;
+      height: 38%;
+    }
+    .form-card {
+      width: 90%;
+      background: none;
+      box-shadow: none;
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+    }
+    .form-label {
+      font-weight: bold;
+      color: #b5835e;
+      font-size: 1.1rem;
+      margin-bottom: 1px;
+      margin-top: 8px;
+      letter-spacing: 0.06em;
+      background: none;
+      text-shadow: 1px 1px 0 #fff5, 0 0 2px #fff3;
+    }
+    .form-input {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 1em;
+      border: 2px solid #ffd1ba;
+      border-radius: 8px;
+      outline: none;
+      margin-bottom: 2px;
+      background: #fffdfa;
+      box-sizing: border-box;
+      box-shadow: 1px 2px 6px 0 #e7d2a870;
+    }
+    .btn-row {
+      width: 100%;
+      display: flex;
+      gap: 16px;
+      margin-top: 6px;
+      justify-content: center;
+    }
+    .main-btn {
+      padding: 0.54em 1.7em;
+      font-size: 1.08em;
+      border: none;
+      border-radius: 999px;
+      box-shadow: 0 2px 10px 0 #e7cfa6cc;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.17s, transform 0.13s;
+    }
+    .main-btn.create {
+      background: linear-gradient(90deg,#27dfbe 60%,#76ede1 100%);
+      color: #fff;
+    }
+    .main-btn.join {
+      background: linear-gradient(90deg,#fd8b79 60%,#f7a48c 100%);
+      color: #fff;
+    }
+    .main-btn:active {
+      transform: translateY(1.5px) scale(0.98);
+      filter: brightness(0.96);
+    }
+    @media (max-width: 650px) {
+      .poster-box { width: 99vw; }
+      .form-card { width: 99%; }
+    }
+    @media (max-width: 480px) {
+      .poster-box { width: 100vw; }
+      .form-area { bottom: 4vw; height: 41vw; }
+    }
+    @media (max-width: 430px) {
+      .form-label { font-size: 0.98em; }
+      .main-btn { font-size: 0.97em; padding: 0.47em 1.12em;}
+    }
+  </style>
 </head>
 <body>
-  <h1>Hello Ogiri!</h1>
+  <div class="main-container">
+    <div class="poster-box">
+      <img src="poster.png" class="poster-img" alt="一刀大喜利バトル！">
+      <div class="form-area">
+        <form class="form-card" id="lobbyForm" autocomplete="off" onsubmit="return false;">
+          <label class="form-label" for="userName">ユーザー名</label>
+          <input class="form-input" type="text" id="userName" placeholder="侍名を入力" maxlength="14" required>
+          <label class="form-label" for="roomName">ルーム名</label>
+          <input class="form-input" type="text" id="roomName" placeholder="部屋名" maxlength="14" required>
+          <div class="btn-row">
+            <button class="main-btn create" id="createBtn" type="button">ルーム作成</button>
+            <button class="main-btn join" id="joinBtn" type="button">参加</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- ロビーBGM追加 -->
+  <audio id="lobbyBgm" src="./bgm/lobby_bgm.mp3" loop preload="auto"></audio>
+  <script>
+    async function createRoom() {
+      const userName = document.getElementById('userName').value.trim();
+      const roomName = document.getElementById('roomName').value.trim();
+      if (!userName || !roomName) return alert('ユーザー名とルーム名を入力してください');
+      const res = await fetch('/api/rooms', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomName, hostName: userName })
+      });
+      const data = await res.json();
+      if (!data.roomId || !data.userId) return alert('ルーム作成に失敗しました');
+      location.href = `/room.html?roomId=${data.roomId}&userName=${encodeURIComponent(userName)}&userId=${data.userId}`;
+    }
+    async function joinRoom() {
+      const userName = document.getElementById('userName').value.trim();
+      const roomName = document.getElementById('roomName').value.trim();
+      if (!userName || !roomName) return alert('ユーザー名とルーム名を入力してください');
+      const res0 = await fetch('/api/rooms/list');
+      const all = await res0.json();
+      const room = all.find(r => r.roomName === roomName);
+      if (!room) return alert('ルームが存在しません');
+      const roomId = room.id;
+      const res = await fetch(`/api/rooms/${roomId}/join`, {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userName })
+      });
+      const data = await res.json();
+      if (!data.userId) return alert('ルーム参加に失敗しました');
+      location.href = `/room.html?roomId=${roomId}&userName=${encodeURIComponent(userName)}&userId=${data.userId}`;
+    }
+    window.onload = () => {
+      document.getElementById('createBtn').onclick = createRoom;
+      document.getElementById('joinBtn').onclick = joinRoom;
+
+      // BGM自動再生
+      const bgm = document.getElementById('lobbyBgm');
+      function unlockBgm() {
+        bgm.volume = 0.24;
+        bgm.play().catch(()=>{});
+        document.removeEventListener("pointerdown", unlockBgm);
+      }
+      document.addEventListener("pointerdown", unlockBgm);
+    }
+  </script>
 </body>
 </html>
