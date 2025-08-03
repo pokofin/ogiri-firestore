@@ -257,12 +257,7 @@
     const url = new URL(location.href);
     const roomId = url.searchParams.get("roomId");
     const userName = url.searchParams.get("userName");
-    userId = url.searchParams.get("userId");
-
-    if (!userId) {
-      alert('不正な遷移です。ロビーから入り直してください');
-      location.href = '/lobby.html';
-    }
+   
 
     let isHost = false, phase = "waiting", round = 1, roundMax = 5, myHand = [], usedParticle = null;
     let answerTokens = [], answerDone = false, voted = false, voteTarget = null;
