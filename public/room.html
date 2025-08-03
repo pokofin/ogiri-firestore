@@ -108,6 +108,25 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+    let userId = null;
+
+     signInAnonymously(auth)
+       .then(() => {
+         // 匿名ログイン成功
+       })
+       .catch((error) => {
+         // 匿名ログイン失敗
+       });
+
+    onAuthStateChanged(auth, (user) => {
+    if (user) {
+      userId = user.uid;
+      console.log("👤 匿名ユーザーID:", user.uid);
+      // ↓このuserIdを今後Firestoreのkeyに使う！！
+    }
+  });
+    
+
     signInAnonymously(auth)
       .then(() => {
        console.log("✅ 匿名ログイン成功！");
@@ -238,7 +257,7 @@
     const url = new URL(location.href);
     const roomId = url.searchParams.get("roomId");
     const userName = url.searchParams.get("userName");
-    const userId = url.searchParams.get("userId");
+    userId = url.searchParams.get("userId");
 
     if (!userId) {
       alert('不正な遷移です。ロビーから入り直してください');
