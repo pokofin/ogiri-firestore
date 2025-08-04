@@ -604,10 +604,17 @@
             usedWords: answerTokens.filter(x=>x.type=='word').map(x=>x.idx)
           })
         });
+        // ★ここでメッセージ表示
+        answerStatus.textContent = "回答送信済み";
       });
       if (answerDone) sendBtn.disabled = true;
       controls.appendChild(sendBtn);
-
+      const answerStatus = document.createElement("span");
+      answerStatus.style.marginLeft = "8px";
+      answerStatus.style.color = "green";
+      answerStatus.style.fontWeight = "bold";
+      controls.appendChild(answerStatus); // ステータスメッセージもcontrolsに追加
+      
       mainEl.appendChild(controls);
     }
 
@@ -660,7 +667,7 @@ function renderAnswerRevealStep() {
       // 4. さらにちょっと待ってBGMフェードイン
       setTimeout(() => {
         soundManager.fadeInBgm(800);
-      }, 1700);
+      }, 300);
 
       // 5. 次の回答 or フェーズ遷移
       setTimeout(() => {
