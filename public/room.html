@@ -37,9 +37,62 @@
     }
     .big { font-size: 1.6rem; font-weight: bold; margin-bottom: 12px; font-family: 'Kaisei Tokumin', serif; color: var(--jp-main);}
     .phase-block { margin: 24px 0; padding: 12px; background: var(--jp-card); border-radius: 8px; box-shadow: 0 1px 8px #ecd097; border: 2px solid var(--jp-outline);}
-    /* ...残りのCSS省略。元のファイルのままOK！... */
+    .hand-cards { display: flex; gap: 6px; flex-wrap: wrap; }
+    .hand-card-block { display: flex; flex-direction: column; align-items: center; }
+    .hand-card { 
+      background: #eee; 
+      padding: 8px 14px; 
+      border-radius: 8px; 
+      font-size: 1.08rem; 
+      cursor: pointer; 
+      user-select: none; 
+      min-width: 64px; 
+      max-width: 90px;
+      margin-bottom: 2px;
+      text-align: center;
+      overflow-wrap: break-word;
+      white-space: pre-line;
+      transition: background 0.2s, font-size 0.2s;
+      font-family: 'Noto Serif JP', serif;
+      border: 2.5px double var(--jp-outline);
+    }
+    .hand-card.used { background: var(--jp-muted); color: #fff; }
+    .hand-card.general { background: #e3f1fb; border-color: #317bbd; }
+    .hand-card.funny   { background: #fff5e2; border-color: #d3910c; }
+    .hand-card.adverb  { background: #ede8f9; border-color: #7c5daa; }
+    .hand-card.verb    { background: #e6f7e7; border-color: #418c5e; }
+    .change-btn { background: var(--jp-accent); color: #fff; border: 1px solid #d18900; border-radius: 50%; padding: 4px 8px; font-size: 1.2rem; cursor: pointer; margin-top: 2px; font-family: 'Kaisei Tokumin', serif;}
+    .change-btn:disabled { opacity: 0.33; cursor: not-allowed; }
+    .controls { margin: 10px 0 0 0; display: flex; gap: 8px; flex-wrap: wrap;}
+    .particle-btn { margin: 2px; padding: 4px 10px; background: #fffde4; border: 1.4px solid var(--jp-gold); border-radius: 6px; cursor: pointer; font-size: 1.08em; font-family: 'Kaisei Tokumin', serif;}
+    .particle-btn.used { background: #ccc; color: #fff; cursor: not-allowed; }
+    .btn { background: linear-gradient(90deg, var(--jp-gold) 40%, #fffde4 100%); border: 2px solid var(--jp-accent); color: var(--jp-main); padding: 8px 24px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; font-family: 'Kaisei Tokumin', serif; font-weight: bold; letter-spacing: 0.1em; margin-right: 12px;}
+    .btn:active { box-shadow: none; background: #e6d89d;}
+    .answer-area { min-height: 38px; font-size: 1.2rem; margin-bottom: 14px; border-bottom: 1.7px solid #c9b682; background: #fcf9ee; border-radius: 4px; padding: 10px; font-family: 'Kaisei Tokumin', serif; color: #52331c;}
+    .vote-btn { padding: 7px 20px; border-radius: 10px; background: linear-gradient(90deg, #e4d0b7, #fff9e5 60%); border: 2px solid var(--jp-outline); font-family: 'Kaisei Tokumin', serif; font-size: 1.17em; margin-bottom: 6px; margin-right: 10px; cursor: pointer; color: var(--jp-main);}
+    .vote-btn.voted { background: #ffc; color: #b89b5a;}
+    .timer { font-size:1.1em; font-weight:bold; color:var(--jp-accent); margin-bottom:8px; font-family: 'Kaisei Tokumin', serif;}
+    .answer-token { background:#fffbe6; border-radius:5px; padding:0 5px; margin:2px; display:inline-block; cursor:pointer; font-family: 'Noto Serif JP', serif;}
+    .answer-token.particle { background:#e7e2b8; color:#3e380e;}
+    .answer-token.selected { border:2px solid var(--jp-accent);}
+    .restart-btn { background: linear-gradient(90deg, #b9cc6c, #e3ffe7 70%); color: #213c12; border: 2.5px solid #486625; border-radius: 10px; font-size: 1.2em; font-family: 'Kaisei Tokumin', serif; font-weight: bold; padding: 13px 38px; margin: 18px auto 0 auto; display: block; box-shadow: 0 3px 0 #b1daaa; cursor: pointer;}
+    .restart-btn:active { box-shadow: none;}
+    .theme-big { font-size: 2.2em; text-align: center; color: var(--jp-main); background: linear-gradient(90deg, #fffde2 90%, #fff6); border-bottom: 2.5px solid var(--jp-gold); border-top: 2.5px solid var(--jp-accent); padding: 16px 0 16px 0; font-family: 'Kaisei Tokumin', serif; letter-spacing: 0.06em; margin: 28px 0 14px 0; box-shadow: 0 2px 0 #fffb;}
+    .players-bar { background: #f5efe1; border: 1.5px solid #bc8e4e; border-radius: 8px; margin-top: 18px; padding: 7px 10px; font-family: 'Kaisei Tokumin', serif; font-size: 1.08em; color: #675a3c; box-shadow: 0 1px 0 #eee; text-align: left;}
+    @media (max-width:650px) {
+      .phase-block, .theme-big { font-size: 1.15em; }
+      .btn, .vote-btn, .restart-btn { font-size: 1em; padding: 10px 8vw;}
+    }
   </style>
   <script type="module">
+  document.addEventListener("pointerdown", () => {
+    try {
+      soundManager.unlockAudio();
+      console.log('unlockAudio手動呼び出し');
+    } catch(e){
+      console.error('unlockAudio呼び出し失敗', e);
+    }
+  }, { once: true, passive: true });  
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getFirestore, doc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
@@ -57,11 +110,130 @@
     const auth = getAuth(app);
     signInAnonymously(auth)
       .then(() => {
-        console.log("✅ 匿名ログイン成功！");
+       console.log("✅ 匿名ログイン成功！");
       })
       .catch((error) => {
-        console.error("❌ 匿名ログイン失敗:", error);
+       console.error("❌ 匿名ログイン失敗:", error);
       });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      console.log("👤 匿名ユーザーID:", user.uid);
+    }
+  });
+
+
+    // ==== サウンドマネージャ修正版 ====  
+    class SoundManager {
+      constructor() {
+        this.bgmAudios = {
+          lobby: this.createBgm("./bgm/lobby_bgm.mp3"),
+          answer: this.createBgm("./bgm/kaitousakusei_bgm.mp3"),
+          reveal: this.createBgm("./bgm/kaitouhappyou_bgm.mp3"),
+        };
+        this.seAudios = {
+          odaihappyou: this.createSe("./se/odaihappyou_se.mp3"),
+          kaitouhappyou: this.createSe("./se/kaitouhappyou_se.mp3"),
+          waraigoe: this.createSe("./se/waraigoe_se.mp3"),
+          kannsei: this.createSe("./se/kannsei_se.mp3"),
+        };
+        this.currentBgm = null;
+        this.unlocked = false;
+        this.unlockHandler = this.unlockAudio.bind(this);
+        document.addEventListener("pointerdown", this.unlockHandler, { once: true, passive: true });
+        // フェード用
+        this.fadeTimer = null;
+        this.targetVolume = 0.18;
+        this.lastFadeBgm = null;
+      }
+      createBgm(src) {
+        const audio = new Audio(src);
+        audio.loop = true;
+        audio.preload = "auto";
+        return audio;
+      }
+      createSe(src) {
+        const audio = new Audio(src);
+        audio.preload = "auto";
+        return audio;
+      }
+      unlockAudio() {
+        for (const k in this.bgmAudios) { this.bgmAudios[k].muted = true; this.bgmAudios[k].play().catch(()=>{}); this.bgmAudios[k].pause(); this.bgmAudios[k].currentTime=0; this.bgmAudios[k].muted = false;}
+        for (const k in this.seAudios) { this.seAudios[k].muted = true; this.seAudios[k].play().catch(()=>{}); this.seAudios[k].pause(); this.seAudios[k].currentTime=0; this.seAudios[k].muted = false;}
+        this.unlocked = true;
+        if (phase === "waiting") {
+           this.playBgm("lobby");
+        } 
+      }
+      playBgm(type) {
+        if (!this.unlocked) return;
+        if (this.currentBgm && this.currentBgm !== this.bgmAudios[type]) {
+          this.currentBgm.pause();
+          this.currentBgm.currentTime = 0;
+        }
+        if (this.bgmAudios[type]) {
+          this.currentBgm = this.bgmAudios[type];
+          this.currentBgm.volume = this.targetVolume;
+          this.currentBgm.play().catch(()=>{});
+        }
+      }
+      stopBgm() {
+        if (this.currentBgm) {
+          this.currentBgm.pause();
+          this.currentBgm.currentTime = 0;
+        }
+        this.currentBgm = null;
+      }
+      playSe(type, volume = 0.95) {
+        if (!this.unlocked) return;
+        if (this.seAudios[type]) {
+          const se = this.seAudios[type];
+          se.currentTime = 0;
+          se.volume = volume;
+          se.play().catch(()=>{});
+        }
+      }
+      fadeOutBgm(duration = 1000, after = null) {
+        if (!this.currentBgm) { if (after) after(); return; }
+        if (this.fadeTimer) clearInterval(this.fadeTimer);
+        const bgm = this.currentBgm;
+        this.lastFadeBgm = bgm;
+        let v = bgm.volume;
+        const step = v / (duration / 50);
+        this.fadeTimer = setInterval(() => {
+          v = Math.max(0, v - step);
+          bgm.volume = v;
+          if (v <= 0.001) {
+            clearInterval(this.fadeTimer);
+            this.fadeTimer = null;
+            bgm.volume = 0;
+            bgm.pause();
+            if (after) after();
+          }
+        }, 50);
+      }
+      fadeInBgm(duration = 800) {
+        if (!this.currentBgm) return;
+        if (this.fadeTimer) clearInterval(this.fadeTimer);
+        const bgm = this.currentBgm;
+        this.lastFadeBgm = bgm;
+        bgm.volume = 0;
+        bgm.play().catch(()=>{});
+        let v = 0;
+        const step = this.targetVolume / (duration / 50);
+        this.fadeTimer = setInterval(() => {
+          v = Math.min(this.targetVolume, v + step);
+          bgm.volume = v;
+          if (v >= this.targetVolume) {
+            clearInterval(this.fadeTimer);
+            this.fadeTimer = null;
+            bgm.volume = this.targetVolume;
+          }
+        }, 50);
+      }
+    }
+    const soundManager = new SoundManager();
+    // ==============================
 
     const url = new URL(location.href);
     const roomId = url.searchParams.get("roomId");
@@ -73,17 +245,28 @@
       location.href = '/lobby.html';
     }
 
-    let myUid = null;
-    let isHost = false;
-    let phase = "waiting", round = 1, roundMax = 5, myHand = [], usedParticle = null;
+    let isHost = false, phase = "waiting", round = 1, roundMax = 5, myHand = [], usedParticle = null;
     let answerTokens = [], answerDone = false, voted = false, voteTarget = null;
     let roomData = {}, roundData = {}, users = {}, points = {}, answers = {}, answerRevealOrder = [];
     let revealStep = 0;
     const PARTICLES = ["に","は","を","が","の","へ","と","より","から","で"];
+    const answerArea = document.createElement("div");
     let themeVoteTimer = null, themeVoteTimeLeft = 0, themeVoteFinished = false;
     let usedChangeIdx = Array(9).fill(false), usedAllChange = false;
     let usedParticleThisRound = false;
     let selectedAnswerIdx = null;
+
+    function resetRoundState() {
+      answerTokens = [];
+      answerDone = false;
+      voted = false;
+      voteTarget = null;
+      selectedAnswerIdx = null;
+      usedChangeIdx = Array(9).fill(false);
+      usedAllChange = false;
+      usedParticleThisRound = false;
+      revealStep = 0;
+    }
 
     document.body.innerHTML = `
       <div class="samurai-title kaisei">侍大喜利バトルの間</div>
@@ -97,17 +280,6 @@
     const mainEl = document.getElementById("mainArea");
     const playersEl = document.getElementById("players");
 
-    // --- ログイン状態でmyUid取得し、subscribe
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        myUid = user.uid;
-        subscribeUsers();
-        subscribeRoom();
-        subscribeRound();
-      }
-    });
-
-    // --- ユーザー一覧取得（isHost判定は廃止！）
     function subscribeUsers() {
       const q = query(collection(db, "users"), where("roomId", "==", roomId));
       onSnapshot(q, snap => {
@@ -125,8 +297,8 @@
         renderPhase();
       });
     }
+    subscribeUsers();
 
-    // --- room.ownerUidでホスト判定
     function subscribeRoom() {
       const roomRef = doc(db, "rooms", roomId);
       onSnapshot(roomRef, snap => {
@@ -136,11 +308,12 @@
         phase = roomData.phase;
         round = roomData.round;
         roundMax = roomData.roundMax;
-        isHost = (roomData.ownerUid === myUid); // ←ココのみ
+        isHost = (roomData.ownerUid === auth.currentUser?.uid);
         if (oldRound !== round) resetRoundState();
         renderPhase();
       });
     }
+    subscribeRoom();
 
     function subscribeRound() {
       let oldRoundKey = "";
@@ -241,7 +414,7 @@
     }
 
     function startThemeVoteTimer() {
-      themeVoteTimeLeft = 10;
+      themeVoteTimeLeft = 30;
       themeVoteFinished = false;
       updateThemeVoteTimer();
       themeVoteTimer = setInterval(() => {
