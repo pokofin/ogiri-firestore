@@ -140,6 +140,33 @@
   </div>
   <!-- ロビーBGM追加 -->
   <audio id="lobbyBgm" src="./bgm/lobby_bgm.mp3" loop preload="auto"></audio>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCuqD00FZA-6E6D2efDRES7jx4mLyT_wGo",
+      authDomain: "oogiri-game.firebaseapp.com",
+      projectId: "oogiri-game",
+      storageBucket: "oogiri-game.appspot.com",
+      messagingSenderId: "219076280601",
+      appId: "1:219076280601:web:e07b5bc63d5692ec1d0588"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+  // 匿名ログイン
+  signInAnonymously(auth)
+    .then(() => {
+      console.log("✅ 匿名ログイン成功！");
+      window.auth = auth; // ← ここでグローバル変数にセット
+    })
+    .catch((error) => {
+      console.error("❌ 匿名ログイン失敗:", error);
+    });
+</script>
+  
   <script>
     async function createRoom() {
       const userName = document.getElementById('userName').value.trim();
@@ -154,7 +181,7 @@
         body: JSON.stringify({
           roomName,
           hostName,
-          ownerUid: auth.currentUser.uid  // ←これを絶対に送る！！
+          ownerUid: window.auth.currentUser.uid   // ←これを絶対に送る！！
         })
       });
       const data = await res.json();
