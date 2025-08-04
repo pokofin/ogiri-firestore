@@ -380,25 +380,26 @@
         clearThemeVoteTimer();
       }
       if (phase === "theme_reveal") {
-        phaseEl.innerHTML = `<div style="font-size:2.8em;font-weight:bold;text-align:center;color:#c41c24;text-shadow:2px 2px 8px #fff6;">いざ勝負！</div>`;
+        phaseEl.innerHTML = "今回のお題は…";
         setTimeout(() => {
-          phaseEl.innerHTML = "今回のお題は…";
-          setTimeout(() => {
-            phaseEl.innerHTML = `<div class="theme-big"><b>${roundData.theme || ""}</b></div>`;
-            soundManager.playSe("odaihappyou");
-          }, 2000);
-          if (isHost) setTimeout(async () => {
-            await fetch(`/api/rooms/${roomId}/rounds/${round}/answer-phase`, { method: "POST" });
-          }, 5000);
-        }, 3000);
-      }
-      
+          phaseEl.innerHTML = `<div class="theme-big"><b>${roundData.theme || ""}</b></div>`;
+          soundManager.playSe("odaihappyou");
+        }, 2000);
+        if (isHost) setTimeout(async () => {
+          await fetch(`/api/rooms/${roomId}/rounds/${round}/answer-phase`, { method: "POST" });
+        }, 5000);
+      }      
       if (phase === "answer") {
         phaseEl.innerHTML = `お題: <span style="font-weight:bold">${roundData.theme || ""}</span>`;
         renderAnswerArea();
       }
       if (phase === "answer_reveal") {
-        renderAnswerRevealStep();
+        phaseEl.innerHTML = `<div style="font-size:2.8em;font-weight:bold;text-align:center;color:#c41c24;text-shadow:2px 2px 8px #fff6;">いざ勝負！</div>`;
+        soundManager.playSe("odaihappyou");
+        setTimeout(() => {
+          renderAnswerRevealStep();
+        }, 2000);
+        return; // ←以降の処理を一時的に止める
       }
       if (phase === "vote") {
         phaseEl.innerHTML = "投票フェーズ";
