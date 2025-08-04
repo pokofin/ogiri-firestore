@@ -148,7 +148,11 @@
       const res = await fetch('/api/rooms', {
         method: 'POST',
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomName, hostName: userName })
+        body: JSON.stringify({
+          roomName,
+          hostName,
+          ownerUid: auth.currentUser.uid  // ←これを絶対に送る！！
+        })
       });
       const data = await res.json();
       if (!data.roomId || !data.userId) return alert('ルーム作成に失敗しました');
