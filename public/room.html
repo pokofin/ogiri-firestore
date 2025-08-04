@@ -394,17 +394,26 @@
         renderAnswerArea();
       }
       if (phase === "answer_reveal") {
-        if (revealStep === 0) {
-          phaseEl.innerHTML = `<div style="font-size:2.8em;font-weight:bold;text-align:center;color:#c41c24;text-shadow:2px 2px 8px #fff6;">いざ勝負！</div>`;
-          soundManager.playSe("odaihappyou");
-          setTimeout(() => {
+        if (isHost) {
+          if (revealStep === 0) {
+            phaseEl.innerHTML = `<div style="font-size:2.8em;font-weight:bold;text-align:center;color:#c41c24;text-shadow:2px 2px 8px #fff6;">いざ勝負！</div>`;
+            soundManager.playSe("odaihappyou");
+            setTimeout(() => {
+              renderAnswerRevealStep();
+            }, 2000);
+            return;
+          } else {
             renderAnswerRevealStep();
-          }, 2000);
-          return;
+            return;
+          }
         } else {
-          renderAnswerRevealStep();
+          // ゲスト側は、表示だけ合わせて（ホスト以外は進行しない）
+          phaseEl.innerHTML = (revealStep === 0)
+            ? `<div style="font-size:2.8em;font-weight:bold;text-align:center;color:#c41c24;text-shadow:2px 2px 8px #fff6;">いざ勝負！</div>`
+            : "";
+          // ここでreturnし、renderAnswerRevealStep()は呼ばない
           return;
-        }
+       }
       }
       if (phase === "vote") {
         phaseEl.innerHTML = "投票フェーズ";
