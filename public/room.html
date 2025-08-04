@@ -309,6 +309,7 @@
         round = roomData.round;
         roundMax = roomData.roundMax;
         isHost = (roomData.ownerUid === auth.currentUser?.uid);
+        console.log("isHost", isHost, "ownerUid", roomData.ownerUid, "myUid", auth.currentUser?.uid, "users", Object.keys(users).length, "started", roomData.started);
         if (oldRound !== round) resetRoundState();
         renderPhase();
       });
@@ -336,6 +337,7 @@
     subscribeRound();
 
     function renderPhase() {
+      console.log("isHost", isHost, "ownerUid", roomData.ownerUid, "myUid", auth.currentUser?.uid, "users", Object.keys(users).length, "started", roomData.started);
       titleEl.textContent = `ラウンド${round} / ${roundMax} - ${phaseLabel(phase)}`;
       mainEl.innerHTML = "";
       phaseEl.innerHTML = "";
