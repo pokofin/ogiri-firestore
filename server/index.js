@@ -1833,14 +1833,25 @@ function randomFromArray(arr, n) {
 }
 
 app.post('/api/rooms', async (req, res) => {
-  const { roomName, hostName } = req.body;
+  const { roomName, hostName, ownerUid } = req.body;
   const roomId = randomId(8);
   await db.collection('rooms').doc(roomId).set({
-    roomName, started: false, phase: 'waiting', round: 1, roundMax: 5, createdAt: Date.now()
+    roomName,
+    started: false,
+    phase: 'waiting',
+    round: 1,
+    roundMax: 5,
+    createdAt: Date.now(),
+    ownerUid: ownerUid // ★追加
   });
   const userId = randomId(16);
   await db.collection('users').doc(userId).set({
-    roomId, userName: hostName, isHost: true, points: 0, hand: [], usedParticle: null
+    roomId,
+    userName: hostName,
+    isHost: true,
+    points: 0,
+    hand: [],
+    usedParticle: null
   });
   res.json({ roomId, userId });
 });
