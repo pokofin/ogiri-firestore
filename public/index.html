@@ -144,6 +144,9 @@
     async function createRoom() {
       const userName = document.getElementById('userName').value.trim();
       const roomName = document.getElementById('roomName').value.trim();
+      const hostName = userName; // これを必ず追加！
+      const ownerUid = auth.currentUser?.uid;
+      console.log("createRoom values:", { roomName, hostName, ownerUid });
       if (!userName || !roomName) return alert('ユーザー名とルーム名を入力してください');
       const res = await fetch('/api/rooms', {
         method: 'POST',
