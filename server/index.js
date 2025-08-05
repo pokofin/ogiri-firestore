@@ -1988,8 +1988,8 @@ app.post('/api/users/:userId/hand', async (req, res) => {
     let newHand = [
       ...randomFromArray(HAND_GENERAL, 4),
       ...randomFromArray(HAND_FUNNY, 2),
-      randomFromArray(HAND_ADVERB, 1)[0],
-      ...randomFromArray(HAND_VERB, 2)
+      ...randomFromArray(HAND_ADVERB, 2),
+      ...randomFromArray(HAND_VERB, 3)
     ];
     if (Array.isArray(keepIdx)) {
       for (let i = 0; i < hand.length; ++i) {
