@@ -249,11 +249,12 @@
     let answerTokens = [], answerDone = false, voted = false, voteTarget = null;
     let roomData = {}, roundData = {}, users = {}, points = {}, answers = {}, answerRevealOrder = [];
     let revealStep = 0;
-    const PARTICLES = ["に","は","を","が","の","へ","と","より","から","で"];
+    const PARTICLES = ["に","は","を","が","の","へ","と","より","から","で","？","!"];
+    let usedParticleCount = 0; // ←追加
+    const PARTICLE_MAX = 2;
     const answerArea = document.createElement("div");
     let themeVoteTimer = null, themeVoteTimeLeft = 0, themeVoteFinished = false;
     let usedChangeIdx = Array(9).fill(false), usedAllChange = false;
-    let usedParticleThisRound = false;
     let selectedAnswerIdx = null;
 
     function resetRoundState() {
@@ -264,8 +265,9 @@
       selectedAnswerIdx = null;
       usedChangeIdx = Array(9).fill(false);
       usedAllChange = false;
-      usedParticleThisRound = false;
+      usedParticleCount = 0;
       revealStep = 0;
+      usedParticleCount = 0;
     }
 
     document.body.innerHTML = `
@@ -369,7 +371,7 @@
         phaseEl.innerHTML = `
           <div style="display:flex;align-items:center;font-size:1.2em;">
             <div>
-              お題投票フェーズ(10秒制限)
+              お題投票フェーズ(30秒制限)
               <span id="themeVoteTimer" class="timer" style="margin-left:0.7em;font-weight:bold;font-size:1.2em;"></span>
             </div>
           </div>  
@@ -541,15 +543,15 @@
         const pbtn = document.createElement("button");
         pbtn.className = "particle-btn";
         pbtn.textContent = pt;
-        if (usedParticleThisRound) pbtn.disabled = true;
+        if (usedParticleCount >= PARTICLE_MAX) pbtn.disabled = true;
         pbtn.onclick = () => {
-          if (answerDone || usedParticleThisRound) return;
+          if (answerDone || usedParticleCount >= PARTICLE_MAX) return;
           if (selectedAnswerIdx !== null) {
             answerTokens.splice(selectedAnswerIdx+1,0,{ type: "particle", value: pt });
           } else {
             answerTokens.push({ type: "particle", value: pt });
           }
-          usedParticleThisRound = true;
+          usedParticleCount++;
           selectedAnswerIdx = null;
           updateAnswerArea();
         };
@@ -584,7 +586,7 @@
       const clearBtn = btnEl("作成クリア", () => {
         if (answerDone) return;
         answerTokens = [];
-        usedParticleThisRound = false;
+        usedParticleCount = 0;
         updateAnswerArea();
       });
       controls.appendChild(clearBtn);
