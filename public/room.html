@@ -495,7 +495,7 @@
         card.className = "hand-card";
         if (i < 4) card.classList.add("general");
         else if (i < 6) card.classList.add("funny");
-        else if (i == 6) card.classList.add("adverb");
+        else if (i < 8) card.classList.add("adverb");
         else card.classList.add("verb");
         let size = 1.1;
         if (w.length > 7) size = Math.max(0.75, 1.1 - (w.length-7)*0.06);
