@@ -1917,8 +1917,8 @@ app.post('/api/rooms/:roomId/start', async (req, res) => {
     const hand = [
       ...randomFromArray(HAND_GENERAL, 4),
       ...randomFromArray(HAND_FUNNY, 2),
-      randomFromArray(HAND_ADVERB, 1)[0],
-      ...randomFromArray(HAND_VERB, 2)
+      ...randomFromArray(HAND_ADVERB, 2),
+      ...randomFromArray(HAND_VERB, 3)
     ];
     await db.collection('users').doc(u.id).update({ hand, usedParticle: null });
   }
@@ -2132,8 +2132,8 @@ app.post('/api/rooms/:roomId/restart', async (req, res) => {
     const hand = [
       ...randomFromArray(HAND_GENERAL, 4),
       ...randomFromArray(HAND_FUNNY, 2),
-      randomFromArray(HAND_ADVERB, 1)[0],
-      ...randomFromArray(HAND_VERB, 2)
+      ...randomFromArray(HAND_ADVERB, 2),
+      ...randomFromArray(HAND_VERB, 3)
     ];
     await db.collection('users').doc(u.id).update({ points: 0, hand, usedParticle: null });
   }
