@@ -2560,6 +2560,10 @@ app.post('/api/rooms/:roomId/rounds/:round/result-phase', async (req, res) => {
   const roundId = `${req.params.roomId}_${req.params.round}`;
   const roundRef = db.collection('rounds').doc(roundId);
   const round = (await roundRef.get()).data();
+  if (round.result && Object.keys(round.result).length > 0) {
+    return res.json({ ok: true, already: true });
+  }
+  
   const votes = round.votes || {};
   let cnts = {};
   Object.values(votes).forEach(uid => {
