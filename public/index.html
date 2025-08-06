@@ -5,6 +5,64 @@
   <title>一刀大喜利バトル！ロビー</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
+    .manual-btn {
+  position: absolute;
+  top: 20px; right: 20px;
+  background: linear-gradient(90deg,#fff7e2,#ffd9a2 70%);
+  border: 2px solid #c2a974;
+  border-radius: 50%;
+  width: 48px; height: 48px;
+  font-size: 1.4em;
+  font-family: "Kaisei Tokumin", "Noto Serif JP", serif;
+  box-shadow: 0 2px 8px #ecd09777;
+  cursor: pointer; z-index: 11;
+  transition: background 0.18s, transform 0.16s;
+}
+.manual-btn:hover { background: #fffbe7; transform: scale(1.07);}
+.manual-modal-bg {
+  position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
+  background: rgba(30,20,10,0.20); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+}
+.manual-modal {
+  background: linear-gradient(120deg,#fdf6e3,#f1ebc7 78%);
+  border: 5px double #b59e68;
+  box-shadow: 0 4px 32px #bca67e66;
+  border-radius: 22px;
+  max-width: 380px; width: 92vw; padding: 2.1em 2em 1.6em 2em;
+  font-family: "Kaisei Tokumin", "Noto Serif JP", serif;
+  font-size: 1.13em; color: #7e6223;
+  letter-spacing: 0.05em;
+  position: relative;
+  animation: fadeIn 0.32s;
+}
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.95);} to {opacity:1; transform:scale(1);} }
+.manual-title {
+  font-size: 1.45em; font-weight: bold;
+  color: #c41c24; text-align: center;
+  margin-bottom: 1em;
+  letter-spacing: 0.1em;
+  border-bottom: 2px dashed #e6c07b;
+  padding-bottom: 0.6em;
+  font-family: "Kaisei Tokumin", "Noto Serif JP", serif;
+}
+.manual-content {
+  margin-bottom: 1.7em;
+  font-family: "Noto Serif JP", serif;
+}
+.manual-close {
+  display: block; margin: 0 auto;
+  background: linear-gradient(90deg,#eee 80%,#f3e0be 100%);
+  border: 2px solid #bfa272;
+  border-radius: 16px; padding: 8px 42px;
+  color: #b27018;
+  font-size: 1.07em; font-family: "Kaisei Tokumin", "Noto Serif JP", serif;
+  font-weight: bold; letter-spacing: 0.12em;
+  cursor: pointer; box-shadow: 0 1px 4px #d1bb8a55;
+  transition: background 0.14s, transform 0.12s;
+}
+.manual-close:hover { background: #fff8e2; transform: scale(1.07);}
+
     body {
       background: #f6f2e9;
       min-height: 100vh;
@@ -121,6 +179,45 @@
   </style>
 </head>
 <body>
+  <button class="manual-btn" id="manualOpenBtn" title="ゲームの指南書">
+    <span style="font-size:1.6em; line-height:1;">？</span>
+  </button>
+  <div id="manualModal" class="manual-modal-bg" style="display:none;">
+    <div class="manual-modal">
+      <div class="manual-title">一刀大喜利指南書</div>
+      <div class="manual-content">
+        <p>
+          <b>其の一：お題投票の儀</b><br>
+          好きなお題に一票を投じよ。
+        </p>
+        <p>
+          <b>其の二：回答作成の術</b><br>
+          <span style="font-size:1em;">
+          手札は<br>
+          ・一般名詞 四枚<br>
+          ・オモシロ 二枚<br>
+          ・形容詞 二枚<br>
+          ・動詞 三枚<br>
+          より自由に組み合わせ、<br>
+          己の最強回答を作り出すべし。<br>
+          <br>
+          手札は個別に一度交換、もしくは全て一新（オールチェンジ）が一度可能。<br>
+          品詞＋記号は最大二つまで使用可。
+          </span>
+        </p>
+        <p>
+          <b>其の三：投票の審判</b><br>
+          皆の回答が発表されたのち、己以外で最も面白きものに一票を捧げよ。<br>
+          最多票を得し者に一点が与えられる。
+        </p>
+        <p>
+          <b>全五回戦にて勝者を決す。</b>
+        </p>
+      </div>
+      <button class="manual-close" id="manualCloseBtn">閉じる</button>
+    </div>
+  </div>
+
   <div class="main-container">
     <div class="poster-box">
       <img src="poster.png" class="poster-img" alt="一刀大喜利バトル！">
@@ -219,6 +316,14 @@
       }
       document.addEventListener("pointerdown", unlockBgm);
     }
+  </script>
+  <script>
+    document.getElementById('manualOpenBtn').onclick = () => {
+      document.getElementById('manualModal').style.display = 'flex';
+    };
+    document.getElementById('manualCloseBtn').onclick = () => {
+      document.getElementById('manualModal').style.display = 'none';
+    };
   </script>
 </body>
 </html>
