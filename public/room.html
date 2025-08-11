@@ -95,6 +95,8 @@
   }, { once: true, passive: true });  
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getFirestore, doc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyCuqD00FZA-6E6D2efDRES7jx4mLyT_wGo",
       authDomain: "oogiri-game.firebaseapp.com",
@@ -105,6 +107,21 @@
     };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
+    signInAnonymously(auth)
+      .then(() => {
+       console.log("✅ 匿名ログイン成功！");
+      })
+      .catch((error) => {
+       console.error("❌ 匿名ログイン失敗:", error);
+      });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      console.log("👤 匿名ユーザーID:", user.uid);
+    }
+  });
+
 
     // ==== サウンドマネージャ修正版 ====  
     class SoundManager {
@@ -126,7 +143,7 @@
         document.addEventListener("pointerdown", this.unlockHandler, { once: true, passive: true });
         // フェード用
         this.fadeTimer = null;
-        this.targetVolume = 0.22;
+        this.targetVolume = 0.18;
         this.lastFadeBgm = null;
       }
       createBgm(src) {
@@ -232,11 +249,12 @@
     let answerTokens = [], answerDone = false, voted = false, voteTarget = null;
     let roomData = {}, roundData = {}, users = {}, points = {}, answers = {}, answerRevealOrder = [];
     let revealStep = 0;
-    const PARTICLES = ["に","は","を","が","の","へ","と","より","から","で"];
+    const PARTICLES = ["に","は","を","が","の","へ","と","より","から","で", "だ", "な", "？","!"];
+    let usedParticleCount = 0; // ←追加
+    const PARTICLE_MAX = 2;
     const answerArea = document.createElement("div");
     let themeVoteTimer = null, themeVoteTimeLeft = 0, themeVoteFinished = false;
     let usedChangeIdx = Array(9).fill(false), usedAllChange = false;
-    let usedParticleThisRound = false;
     let selectedAnswerIdx = null;
 
     function resetRoundState() {
@@ -247,8 +265,9 @@
       selectedAnswerIdx = null;
       usedChangeIdx = Array(9).fill(false);
       usedAllChange = false;
-      usedParticleThisRound = false;
+      usedParticleCount = 0;
       revealStep = 0;
+      usedParticleCount = 0;
     }
 
     document.body.innerHTML = `
@@ -267,14 +286,12 @@
       const q = query(collection(db, "users"), where("roomId", "==", roomId));
       onSnapshot(q, snap => {
         users = {}; points = {};
-        isHost = false;
         myHand = [];
         snap.forEach(docx => {
           const d = docx.data();
           users[docx.id] = d;
           points[docx.id] = d.points || 0;
           if (docx.id === userId) {
-            isHost = !!d.isHost;
             myHand = d.hand || [];
           }
         });
@@ -293,6 +310,8 @@
         phase = roomData.phase;
         round = roomData.round;
         roundMax = roomData.roundMax;
+        isHost = (roomData.ownerUid === auth.currentUser?.uid);
+        console.log("isHost", isHost, "ownerUid", roomData.ownerUid, "myUid", auth.currentUser?.uid, "users", Object.keys(users).length, "started", roomData.started);
         if (oldRound !== round) resetRoundState();
         renderPhase();
       });
@@ -311,14 +330,7 @@
           if (!snap.exists()) return;
           roundData = snap.data();
           answers = roundData.answers || {};
-
-
-          if (roundData.answerRevealOrder && roundData.answerRevealOrder.length) {
-            answerRevealOrder = roundData.answerRevealOrder;
-          } else {
-            answerRevealOrder = [];
-          }
- 
+          answerRevealOrder = roundData.answerRevealOrder || [];
           renderPhase();
         });
       }
@@ -327,6 +339,7 @@
     subscribeRound();
 
     function renderPhase() {
+      console.log("isHost", isHost, "ownerUid", roomData.ownerUid, "myUid", auth.currentUser?.uid, "users", Object.keys(users).length, "started", roomData.started);
       titleEl.textContent = `ラウンド${round} / ${roundMax} - ${phaseLabel(phase)}`;
       mainEl.innerHTML = "";
       phaseEl.innerHTML = "";
@@ -358,7 +371,7 @@
         phaseEl.innerHTML = `
           <div style="display:flex;align-items:center;font-size:1.2em;">
             <div>
-              お題投票フェーズ(10秒制限)
+              お題投票フェーズ(30秒制限)
               <span id="themeVoteTimer" class="timer" style="margin-left:0.7em;font-weight:bold;font-size:1.2em;"></span>
             </div>
           </div>  
@@ -377,14 +390,16 @@
         if (isHost) setTimeout(async () => {
           await fetch(`/api/rooms/${roomId}/rounds/${round}/answer-phase`, { method: "POST" });
         }, 5000);
-      }
+      }      
       if (phase === "answer") {
         phaseEl.innerHTML = `お題: <span style="font-weight:bold">${roundData.theme || ""}</span>`;
         renderAnswerArea();
       }
+      
       if (phase === "answer_reveal") {
         renderAnswerRevealStep();
       }
+
       if (phase === "vote") {
         phaseEl.innerHTML = "投票フェーズ";
         renderVoteArea();
@@ -405,7 +420,7 @@
     }
 
     function startThemeVoteTimer() {
-      themeVoteTimeLeft = 10;
+      themeVoteTimeLeft = 30;
       themeVoteFinished = false;
       updateThemeVoteTimer();
       themeVoteTimer = setInterval(() => {
@@ -482,7 +497,7 @@
         card.className = "hand-card";
         if (i < 4) card.classList.add("general");
         else if (i < 6) card.classList.add("funny");
-        else if (i == 6) card.classList.add("adverb");
+        else if (i < 8) card.classList.add("adverb");
         else card.classList.add("verb");
         let size = 1.1;
         if (w.length > 7) size = Math.max(0.75, 1.1 - (w.length-7)*0.06);
@@ -528,15 +543,15 @@
         const pbtn = document.createElement("button");
         pbtn.className = "particle-btn";
         pbtn.textContent = pt;
-        if (usedParticleThisRound) pbtn.disabled = true;
+        if (usedParticleCount >= PARTICLE_MAX) pbtn.disabled = true;
         pbtn.onclick = () => {
-          if (answerDone || usedParticleThisRound) return;
+          if (answerDone || usedParticleCount >= PARTICLE_MAX) return;
           if (selectedAnswerIdx !== null) {
             answerTokens.splice(selectedAnswerIdx+1,0,{ type: "particle", value: pt });
           } else {
             answerTokens.push({ type: "particle", value: pt });
           }
-          usedParticleThisRound = true;
+          usedParticleCount++;
           selectedAnswerIdx = null;
           updateAnswerArea();
         };
@@ -571,7 +586,7 @@
       const clearBtn = btnEl("作成クリア", () => {
         if (answerDone) return;
         answerTokens = [];
-        usedParticleThisRound = false;
+        usedParticleCount = 0;
         updateAnswerArea();
       });
       controls.appendChild(clearBtn);
@@ -593,10 +608,19 @@
             usedWords: answerTokens.filter(x=>x.type=='word').map(x=>x.idx)
           })
         });
+        // ★ここでメッセージ表示
+        anrenderAnswerArea();
       });
       if (answerDone) sendBtn.disabled = true;
       controls.appendChild(sendBtn);
 
+      const answerStatus = document.createElement("span");
+      answerStatus.style.marginLeft = "8px";
+      answerStatus.style.color = "green";
+      answerStatus.style.fontWeight = "bold";
+      if (answerDone) answerStatus.textContent = "回答送信済み";
+      controls.appendChild(answerStatus); // ステータスメッセージもcontrolsに追加
+      
       mainEl.appendChild(controls);
     }
 
@@ -649,7 +673,7 @@ function renderAnswerRevealStep() {
       // 4. さらにちょっと待ってBGMフェードイン
       setTimeout(() => {
         soundManager.fadeInBgm(800);
-      }, 1700);
+      }, 300);
 
       // 5. 次の回答 or フェーズ遷移
       setTimeout(() => {
@@ -670,22 +694,12 @@ function renderAnswerRevealStep() {
     function renderVoteArea() {
       mainEl.innerHTML = "";
       if (!roundData || !roundData.answers) return;
-
-  // --- 順番固定処理 追加 ---
-      if (!answerRevealOrder) answerRevealOrder = [];
-      if (!answerRevealOrder.length) {
-        answerRevealOrder = Object.keys(roundData.answers);
-      }
-  // -------------------------
-
-      answerRevealOrder.forEach(uid => {
-        const ans = roundData.answers[uid];
+      Object.entries(roundData.answers).forEach(([uid, ans]) => {
         const btn = document.createElement("button");
         btn.className = "vote-btn";
         btn.textContent = ans.answer;
         if (uid === userId) {
-          btn.disabled = true;
-          btn.style.opacity = "0.5";
+          btn.disabled = true; btn.style.opacity = "0.5";
         }
         if (voted && voteTarget === uid) btn.classList.add("voted");
         btn.onclick = async () => {
@@ -695,8 +709,7 @@ function renderAnswerRevealStep() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, voteForUserId: uid })
           });
-          voted = true;
-          voteTarget = uid;
+          voted = true; voteTarget = uid;
           btn.classList.add("voted");
           if (isHost && allVotesIn()) {
             setTimeout(() => {
@@ -707,7 +720,6 @@ function renderAnswerRevealStep() {
         mainEl.appendChild(btn);
       });
     }
-
     function allVotesIn() {
       if (!roundData || !roundData.votes) return false;
       return Object.keys(users).every(uid => roundData.votes[uid]);
