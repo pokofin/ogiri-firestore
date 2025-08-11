@@ -268,6 +268,7 @@
       usedParticleCount = 0;
       revealStep = 0;
       usedParticleCount = 0;
+      window.fixedVoteOrder = null;
     }
 
     document.body.innerHTML = `
@@ -609,7 +610,7 @@
           })
         });
         // ★ここでメッセージ表示
-        anrenderAnswerArea();
+        renderAnswerArea();
       });
       if (answerDone) sendBtn.disabled = true;
       controls.appendChild(sendBtn);
@@ -691,39 +692,62 @@ function renderAnswerRevealStep() {
   }, delay - 1000); // 回答表示タイミングの1秒前にフェードアウト開始
 }
 
-    function renderVoteArea() {
-      mainEl.innerHTML = "";
-      if (!roundData || !roundData.answers) return;
-      Object.entries(roundData.answers).forEach(([uid, ans]) => {
-        const btn = document.createElement("button");
-        btn.className = "vote-btn";
-        btn.textContent = ans.answer;
-        if (uid === userId) {
-          btn.disabled = true; btn.style.opacity = "0.5";
-        }
-        if (voted && voteTarget === uid) btn.classList.add("voted");
-        btn.onclick = async () => {
-          if (voted) return;
-          await fetch(`/api/rooms/${roomId}/rounds/${round}/vote`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, voteForUserId: uid })
-          });
-          voted = true; voteTarget = uid;
-          btn.classList.add("voted");
-          if (isHost && allVotesIn()) {
-            setTimeout(() => {
-              fetch(`/api/rooms/${roomId}/rounds/${round}/result-phase`, { method: "POST" });
-            }, 800);
-          }
-        };
-        mainEl.appendChild(btn);
+function allVotesIn() {
+  if (!roundData || !roundData.votes) return false;
+  return Object.keys(roundData.votes).length === Object.keys(users).length;
+}
+
+function renderVoteArea() {
+  mainEl.innerHTML = "";
+  if (!roundData || !roundData.answers) return;
+
+  // === 順序固定: 最初のvoteフェーズ突入時に並び順を確定 ===
+  if (!window.fixedVoteOrder) {
+    window.fixedVoteOrder = Object.keys(roundData.answers);
+  }
+
+  window.fixedVoteOrder.forEach(uid => {
+    const ans = roundData.answers[uid];
+    if (!ans) return;
+    const btn = document.createElement("button");
+    btn.className = "vote-btn";
+    btn.textContent = ans.answer;
+
+    if (uid === userId) {
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+    }
+    if (voted && voteTarget === uid) btn.classList.add("voted");
+
+    btn.onclick = async () => {
+      if (voted) return;
+
+  // Firestore に投票送信
+      await fetch(`/api/rooms/${roomId}/rounds/${round}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, voteForUserId: uid })
       });
-    }
-    function allVotesIn() {
-      if (!roundData || !roundData.votes) return false;
-      return Object.keys(users).every(uid => roundData.votes[uid]);
-    }
+
+  // 即時ローカル反映
+      voted = true;
+      voteTarget = uid;
+
+  // 順序固定したままUIを再描画
+      renderVoteArea();
+
+  // ホストなら全員投票済みをチェック
+      if (isHost && allVotesIn()) {
+        setTimeout(() => {
+          fetch(`/api/rooms/${roomId}/rounds/${round}/result-phase`, { method: "POST" });
+        }, 800);
+      }
+    };
+
+    mainEl.appendChild(btn);
+  });
+}
+
 
     function renderResultArea() {
       mainEl.innerHTML = "";
