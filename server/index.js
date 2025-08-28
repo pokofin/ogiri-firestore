@@ -2452,31 +2452,19 @@ app.post('/api/rooms/:roomId/rounds/:round/answer-reveal', async (req, res) => {
   const round = (await roundRef.get()).data();
   const votes = round.themeVotes || {};
   const themes = round.themes || [];
-
-  // 票を数える
   const counts = Array(themes.length).fill(0);
-  Object.values(votes).forEach(idx => {
-    if (typeof idx === "number") counts[idx]++;
-  });
-
-  // 最大得票を探す
-  const max = Math.max(...counts);
-
-  // 同点候補を集める
-  const candidateIdxs = counts
-    .map((c, i) => (c === max ? i : -1))
-    .filter(i => i >= 0);
-
-  // 🔥 同点ならランダムに選ぶ
-  const themeIndex = candidateIdxs[Math.floor(Math.random() * candidateIdxs.length)];
-
+  Object.values(votes).forEach(idx => { if (typeof idx === "number") counts[idx]++; });
+  let max = Math.max(...counts);
+  let candidateIdxs = counts.map((c, i) => c === max ? i : -1).filter(i => i >= 0);
+  let themeIndex = candidateIdxs[0];   // ← ここが問題。同票でも最初のやつ固定
+  for (const uid of Object.keys(votes)) {
+    if (candidateIdxs.includes(votes[uid])) { themeIndex = votes[uid]; break; }
+  }
   const theme = themes[themeIndex] || themes[0] || "";
   await roundRef.update({ theme });
   await db.collection('rooms').doc(req.params.roomId).update({ phase: 'theme_reveal' });
-
   res.json({ ok: true });
 });
-
 
 app.post('/api/rooms/:roomId/rounds/:round/answer-phase', async (req, res) => {
   await db.collection('rooms').doc(req.params.roomId).update({ phase: 'answer' });
